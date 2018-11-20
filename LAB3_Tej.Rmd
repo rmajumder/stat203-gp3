@@ -1,0 +1,206 @@
+---
+title: "Singh_tejinderpal_Lab3"
+author: "Tej"
+date: "11/17/2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r echo=TRUE}
+paste("working")
+library("carData")
+library("car")
+library('stats')
+library('dplyr')
+library(ggplot2)
+library(GGally)
+library(ggcorrplot)
+library(ggpubr)
+
+setwd("/Users/tejinderpalsingh/downloads")
+crimes= read.csv("crime_v2.csv", header = T, strip.white = T, blank.lines.skip = T, na.strings = c(""),stringsAsFactors = FALSE)
+nrow(crimes)
+## removing empty rows
+crimes <- crimes[!is.na(crimes$county),]
+summary(crimes)
+count(group_by(crimes,central,west,urban))
+### why there is overlapping between 4 regions. County should fall into one region.
+count(crimes[crimes$prbarr > 1,])
+## looks like an error above, Probabilty more than 1
+
+crimes$prbconv <- as.numeric(gsub("[^0-9.]+", "", crimes$prbconv))
+
+count(crimes[crimes$prbconv > 1,])
+
+## 16 records with probabilty more than 1 above. May be wrong data ? Or some convitions happened without arrest ?
+
+
+scatterplotMatrix(crimes[,c("crmrte","prbarr",
+                               "prbconv","prbpris","avgsen","polpc","density","taxpc")], 
+                  main="Analysis of Key Crime Variables")
+
+
+## Crime is less when Pr of arrest is more
+## Same way crime is less when Pr of conviction is more 
+## Avg Sentence and Pr of prison does not show relation with crime
+## Crime increases as density of population increases.
+## Tax per capita does not show strong relation with crime, in general crime is more for less taxpc
+
+
+scatterplotMatrix(crimes[,c("crmrte","pctmin80",
+                               "wcon","wtuc","wtrd","wfir","wser","wmfg")], 
+                  main="Analysis of Key Crime Variables")
+
+## these above variabels don't have relation with crime
+
+scatterplotMatrix(crimes[,c("crmrte","wfed",
+                               "wsta","wloc","mix","pctymle")], 
+                  main="Analysis of Key Crime Variables")
+
+### none of these variables show significant correlation 
+log.crimes <- crimes
+
+log.crimes$log.crmrte <- log(log.crimes$crmrte)
+log.crimes$log.prbarr <- log(log.crimes$prbarr)
+log.crimes$log.prbconv <- log(log.crimes$prbconv)
+log.crimes$log.prbpris <- log(log.crimes$prbpris)
+log.crimes$log.avgsen <- log(log.crimes$avgsen)
+log.crimes$log.polpc <- log(log.crimes$polpc)
+log.crimes$log.density <- log(log.crimes$density)
+log.crimes$log.taxpc <- log(log.crimes$taxpc)
+log.crimes$log.west <- log(log.crimes$west)
+log.crimes$log.central <- log(log.crimes$central)
+log.crimes$log.urban <- log(log.crimes$urban)
+log.crimes$log.pctmin80 <- log(log.crimes$pctmin80)
+log.crimes$log.wcon <- log(log.crimes$wcon)
+log.crimes$log.wtuc <- log(log.crimes$wtuc)
+log.crimes$log.wtrd <- log(log.crimes$wtrd)
+log.crimes$log.wfir <- log(log.crimes$wfir)
+log.crimes$log.wser <- log(log.crimes$wser)
+log.crimes$log.wmfg <- log(log.crimes$wmfg)
+log.crimes$log.wfed <- log(log.crimes$wfed)
+log.crimes$log.wsta <- log(log.crimes$wsta)
+log.crimes$log.wloc <- log(log.crimes$wloc)
+log.crimes$log.mix <- log(log.crimes$mix)
+log.crimes$log.pctymle <- log(log.crimes$pctymle)
+
+smoothing_method = "glm"
+options(repr.plot.width=7, repr.plot.height=7)
+ggscatmat(log.crimes[,c("log.crmrte","crmrte", "prbarr", "prbconv", "density", "taxpc", "wcon", "wtrd", "wfir", "wmfg", "wfed", "wloc", "pctymle")], alpha=0.8) +
+geom_smooth(method=smoothing_method)
+
+
+smoothing_method = "glm"
+options(repr.plot.width=7, repr.plot.height=7)
+ggscatmat(log.crimes[,c("log.crmrte","crmrte","log.prbarr", "log.prbconv", "log.density", "log.taxpc", "log.wcon", "log.wtrd", "log.wfir", "log.wmfg", "log.wfed", "log.wloc", "log.pctymle")], alpha=0.8) +
+geom_smooth(method=smoothing_method)
+
+
+log.crimes <- crimes
+
+log.crimes$log.crmrte <- log(log.crimes$crmrte)
+log.crimes$log.prbarr <- log(log.crimes$prbarr)
+log.crimes$log.prbconv <- log(log.crimes$prbconv)
+log.crimes$log.prbpris <- log(log.crimes$prbpris)
+log.crimes$log.avgsen <- log(log.crimes$avgsen)
+log.crimes$log.polpc <- log(log.crimes$polpc)
+log.crimes$log.density <- log(log.crimes$density)
+log.crimes$log.taxpc <- log(log.crimes$taxpc)
+log.crimes$log.west <- log(log.crimes$west)
+log.crimes$log.central <- log(log.crimes$central)
+log.crimes$log.urban <- log(log.crimes$urban)
+log.crimes$log.pctmin80 <- log(log.crimes$pctmin80)
+log.crimes$log.wcon <- log(log.crimes$wcon)
+log.crimes$log.wtuc <- log(log.crimes$wtuc)
+log.crimes$log.wtrd <- log(log.crimes$wtrd)
+log.crimes$log.wfir <- log(log.crimes$wfir)
+log.crimes$log.wser <- log(log.crimes$wser)
+log.crimes$log.wmfg <- log(log.crimes$wmfg)
+log.crimes$log.wfed <- log(log.crimes$wfed)
+log.crimes$log.wsta <- log(log.crimes$wsta)
+log.crimes$log.wloc <- log(log.crimes$wloc)
+log.crimes$log.mix <- log(log.crimes$mix)
+log.crimes$log.pctymle <- log(log.crimes$pctymle)
+
+
+smoothing_method = "glm"
+options(repr.plot.width=7, repr.plot.height=7)
+ggscatmat(log.crimes[,c("crmrte","log.crmrte", "log.density", "log.mix", "log.wser", "log.polpc", "log.avgsen", "log.pctmin80", "log.wsta", "log.wtuc", "log.prbpris","density", "mix", "wser", "polpc", "avgsen", "pctmin80", "wsta", "wtuc", "prbpris")], alpha=0.8) +
+geom_smooth(method=smoothing_method)
+
+### log.polpc shows 0.39 COR with crmrte as compared to .17 of polpc
+### log.pctmin80 shows 0.31 COR with pctmin80 as compared to .19 of polpc
+
+(model11 <- lm(crmrte ~ density + pctymle + prbconv + prbarr + taxpc, data = log.crimes))
+diag(vcov(model11))
+paste("R_SQ = ",summary(model11)$r.squared,"  and Adjusted_R_Squared = ",summary(model11)$adj.r.squared)
+
+#### co-efficient of taxpc is very very small ... 
+
+
+(model12 <- lm(crmrte ~ density + pctymle + prbconv + prbarr + taxpc+prbpris, data = log.crimes))
+diag(vcov(model12))
+paste("R_SQ = ",summary(model12)$r.squared,"  and Adjusted_R_Squared = ",summary(model12)$adj.r.squared)
+
+### As an example , adding "prbpris" decreases adjusted R square and increases variancce  so eliminate it
+
+(model13 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+polpc, data = log.crimes))
+diag(vcov(model13))
+paste("R_SQ = ",summary(model13)$r.squared,"  and Adjusted_R_Squared = ",summary(model13)$adj.r.squared)
+
+### with addition of polpc RSQ increases but variance also increases for all. 
+
+(model14 <- lm(log.crmrte ~ density + pctymle + prbconv + prbarr+log.polpc, data = log.crimes))
+diag(vcov(model14))
+paste("R_SQ = ",summary(model14)$r.squared,"  and Adjusted_R_Squared = ",summary(model14)$adj.r.squared)
+
+## using log.polpc makes variance worst and RSQ also decreases so log.polpc is not advisable to use at all 
+
+(model15 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+pctmin80, data = log.crimes))
+diag(vcov(model15))
+paste("R_SQ = ",summary(model15)$r.squared,"  and Adjusted_R_Squared = ",summary(model15)$adj.r.squared)
+
+(model16 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+log.pctmin80, data = log.crimes))
+diag(vcov(model16))
+paste("R_SQ = ",summary(model16)$r.squared,"  and Adjusted_R_Squared = ",summary(model16)$adj.r.squared)
+
+### Model15 has better RSQ and better VAR than 16 and model1 so keep pctmin80 without log 
+
+(model17 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+log.polpc+pctmin80, data = log.crimes))
+diag(vcov(model17))
+paste("R_SQ = ",summary(model17)$r.squared,"  and Adjusted_R_Squared = ",summary(model17)$adj.r.squared)
+
+##### In model 14 added log.polpc and it made model worst. Now added this variable along with pctmin80 and made model 17 best from both VAR and RSQ 
+
+diag(vcov(model11))
+diag(vcov(model12))
+diag(vcov(model13))
+diag(vcov(model14))
+diag(vcov(model15))
+diag(vcov(model16))
+diag(vcov(model17))
+
+paste("R_SQ = ",summary(model11)$r.squared,"  and Adjusted_R_Squared = ",summary(model11)$adj.r.squared)
+paste("R_SQ = ",summary(model12)$r.squared,"  and Adjusted_R_Squared = ",summary(model12)$adj.r.squared)
+paste("R_SQ = ",summary(model13)$r.squared,"  and Adjusted_R_Squared = ",summary(model13)$adj.r.squared)
+paste("R_SQ = ",summary(model14)$r.squared,"  and Adjusted_R_Squared = ",summary(model14)$adj.r.squared)
+paste("R_SQ = ",summary(model15)$r.squared,"  and Adjusted_R_Squared = ",summary(model15)$adj.r.squared)
+paste("R_SQ = ",summary(model16)$r.squared,"  and Adjusted_R_Squared = ",summary(model16)$adj.r.squared)
+paste("R_SQ = ",summary(model17)$r.squared,"  and Adjusted_R_Squared = ",summary(model17)$adj.r.squared)
+
+paste(" AIC for model11 = ", AIC(model11))
+paste(" AIC for model12 = ", AIC(model12))
+paste(" AIC for model13 = ", AIC(model13))
+paste(" AIC for model14 = ", AIC(model14))
+paste(" AIC for model15 = ", AIC(model15))
+paste(" AIC for model16 = ", AIC(model16))
+paste(" AIC for model17 = ", AIC(model17))
+```
