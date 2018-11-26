@@ -1,0 +1,206 @@
+---
+title: "Singh_tejinderpal_Lab3"
+author: "Tej"
+date: "11/25/2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r echo=TRUE}
+paste("working")
+library("carData")
+library("car")
+library('stats')
+library('dplyr')
+library(ggplot2)
+library(GGally)
+library(ggcorrplot)
+library(ggpubr)
+library(stargazer)
+
+setwd("/Users/tejinderpalsingh/downloads")
+cdata= read.csv("crime_v2.csv", header = T, strip.white = T, blank.lines.skip = T, na.strings = c(""),stringsAsFactors = FALSE)
+nrow(cdata)
+## removing empty rows
+cdata <- cdata[!is.na(cdata$county),]
+summary(cdata)
+
+cdata$prbconv <- as.numeric(gsub("[^0-9.]+", "", cdata$prbconv))
+
+#Since the variables prbarr or prbconv are considered as ratio/probability, the values should have a range between 0 and 1
+nrow(cdata[cdata$prbarr > 1,])
+nrow(cdata[cdata$prbconv > 1,])
+
+#Since the total number of rows is 91, rather than removing those values, we can limit those to 1.
+cdata[4:5] <- lapply(cdata[4:5], function(x) ifelse( x > 1, 1, x))
+
+cdata[4:5] <- lapply(cdata[4:5], function(x) ifelse( x > 1, 1, x))
+mymodel1 <- lm(crmrte ~  prbarr + prbconv + pctymle +polpc + density + taxpc +  pctmin80+ wser, data = cdata)
+summary(mymodel1)
+
+AIC(mymodel1)
+
+diag(vcov(mymodel1))   
+paste("polpc showing big Variance = 1.457071e+00")
+cooksd <- cooks.distance(mymodel1)
+plot(cooksd, pch="*", cex=2, main="Influential Obervations by Cooks distance")
+abline(h = 5*mean(cooksd, na.rm=T), col="red")
+
+influential <- as.numeric(names(cooksd)[(cooksd > 5*mean(cooksd, na.rm=T))])
+cooksd[influential]
+
+paste("As per summary of mymodel1, all variables are statistically significant. Last column under Coefficients, Pr(>|t|) is less than 0.05 for all variables and model p-value is less than 0.05 as well")
+
+paste("removing above 2 outliers with elevated cook's distance ")
+
+cdata.outlier <- cdata[(cdata$county != cdata[influential[1],]$county) & (cdata$county != cdata[influential[2],]$county),]
+
+### below model2 is after removing 2 outliers from above data
+
+mymodel2 <- lm(crmrte ~  prbarr + prbconv + pctymle +polpc + density + taxpc +  pctmin80+ wser, data = cdata.outlier)
+summary(mymodel2)
+AIC(mymodel2)
+diag(vcov(mymodel2))
+paste("after removing Outliers , taxpc and wser are not statistically significant anymore . so removed them from model. mymodel3 below on origional data excluding variabels taxpc and wser from model")
+
+mymodel3 <- lm(crmrte ~  prbarr + prbconv + pctymle +polpc + density +  pctmin80, data = cdata)
+
+summary(mymodel3)
+
+paste("After removing 2 variables from model Now Even pctymle is not statistically significant. so remove it from model. below mymodel excluding pctmle ")
+
+mymodel4 <- lm(crmrte ~  prbarr + prbconv + polpc + density +  pctmin80, data = cdata)
+
+summary(mymodel4)
+
+AIC(mymodel4)  ### 589
+
+diag(vcov(mymodel4))   ### polpc showing big Variance = 1.357193e+00
+
+cooksd <- cooks.distance(mymodel4)
+plot(cooksd, pch="*", cex=2, main="Influential Obervations by Cooks distance")
+abline(h = 5*mean(cooksd, na.rm=T), col="red")
+
+influential <- as.numeric(names(cooksd)[(cooksd > 5*mean(cooksd, na.rm=T))])
+cooksd[influential]
+
+paste("Only one point with cook distance morethan 0.5 and no point more than 1. So not deleting any data point")
+
+
+
+mean(mymodel4$residuals)  
+paste("Checking conditions that E(error) = 0. shows it is almost zero . So 1st assumtion met for OLS")
+
+### for 2nd assumtion , below COV should be near to zero
+
+cov(mymodel4$residuals,cdata$density)
+cov(mymodel4$residuals,cdata$prbconv)
+cov(mymodel4$residuals,cdata$prbarr)
+cov(mymodel4$residuals,cdata$polpc)
+cov(mymodel4$residuals,cdata$pctmin80)
+
+paste("for above all variables covariances with residuals are almost zero so 2nd OLS assumtion met")
+
+paste("All variables are highly statistically significant with three ***. Adjusted R-square is decent 0.76 so model explains 76% of sample population. Variation of all coefficients is almost zero except polpc which has variation = 1.357193e+00")
+
+paste("As we explained all the specification above. this model looks robust")
+
+##### Try some transformation on data
+
+log.cdata <- cdata
+
+log.cdata$log.crmrte <- log(log.cdata$crmrte)
+log.cdata$log.prbarr <- log(log.cdata$prbarr)
+log.cdata$log.prbconv <- log(log.cdata$prbconv)
+log.cdata$log.prbpris <- log(log.cdata$prbpris)
+log.cdata$log.avgsen <- log(log.cdata$avgsen)
+log.cdata$log.polpc <- log(log.cdata$polpc)
+log.cdata$log.density <- log(log.cdata$density)
+log.cdata$log.taxpc <- log(log.cdata$taxpc)
+log.cdata$log.west <- log(log.cdata$west)
+log.cdata$log.central <- log(log.cdata$central)
+log.cdata$log.urban <- log(log.cdata$urban)
+log.cdata$log.pctmin80 <- log(log.cdata$pctmin80)
+log.cdata$log.wcon <- log(log.cdata$wcon)
+log.cdata$log.wtuc <- log(log.cdata$wtuc)
+log.cdata$log.wtrd <- log(log.cdata$wtrd)
+log.cdata$log.wfir <- log(log.cdata$wfir)
+log.cdata$log.wser <- log(log.cdata$wser)
+log.cdata$log.wmfg <- log(log.cdata$wmfg)
+log.cdata$log.wfed <- log(log.cdata$wfed)
+log.cdata$log.wsta <- log(log.cdata$wsta)
+log.cdata$log.wloc <- log(log.cdata$wloc)
+log.cdata$log.mix <- log(log.cdata$mix)
+log.cdata$log.pctymle <- log(log.cdata$pctymle)
+
+paste("After doing log above. Tried many combinations. Tried combination with Square and Square-root of all the columns. Nothings shows significant relation. Only if we use log.polpc then pctmle and taxpc show statistical significance. Below model ")
+
+mymodel5 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+log.polpc+pctmin80+taxpc, data = log.cdata)
+
+summary(mymodel5)
+
+AIC(mymodel5)  ### 589
+
+diag(vcov(mymodel5))   ### polpc showing big Variance = 1.357193e+00
+
+cooksd <- cooks.distance(mymodel5)
+plot(cooksd, pch="*", cex=2, main="Influential Obervations by Cooks distance")
+abline(h = 5*mean(cooksd, na.rm=T), col="red")
+
+influential <- as.numeric(names(cooksd)[(cooksd > 5*mean(cooksd, na.rm=T))])
+cooksd[influential]
+
+paste(" In mymodel5 , all variable are statistically significant. There is one outlier, row 25 with elevated cook's distance. Removing that outlier. ")
+
+log.cdata.outlier <- log.cdata[(log.cdata$county != log.cdata[influential[1],]$county) ,]
+
+mymodel6 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+log.polpc+pctmin80+taxpc, data = log.cdata.outlier)
+
+summary(mymodel6)
+
+paste("after removing outlier row 25 , taxpc becomes Statistically in-significant. so need to remove taxpc from model")
+
+mymodel7 <- lm(crmrte ~ density + pctymle + prbconv + prbarr+log.polpc+pctmin80, data = log.cdata.outlier)
+
+summary(mymodel7)
+cooksd <- cooks.distance(mymodel7)
+plot(cooksd, pch="*", cex=2, main="Influential Obervations by Cooks distance")
+abline(h = 5*mean(cooksd, na.rm=T), col="red")
+
+influential <- as.numeric(names(cooksd)[(cooksd > 5*mean(cooksd, na.rm=T))])
+cooksd[influential]
+
+diag(vcov(mymodel7))
+
+## very low variance for all 
+
+## Checking conditions that E(error) = 0. Below shows it is almost zero . So 1st assumtion met for OLS
+
+mean(mymodel7$residuals)   
+
+### for 2nd assumtion , below COV should be near to zero
+
+cov(mymodel7$residuals,log.cdata.outlier$density)
+cov(mymodel7$residuals,log.cdata.outlier$pctymle)
+cov(mymodel7$residuals,log.cdata.outlier$prbconv)
+cov(mymodel7$residuals,log.cdata.outlier$prbarr)
+cov(mymodel7$residuals,log.cdata.outlier$log.polpc)
+cov(mymodel7$residuals,log.cdata.outlier$pctmin80)
+
+##  for above all covariance with residuals are is almost zero.
+
+AIC(mymodel7)
+
+confint(mymodel7,conf.level=0.95)
+
+plot(mymodel7)
+
+```
