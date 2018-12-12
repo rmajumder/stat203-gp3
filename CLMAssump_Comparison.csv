@@ -1,0 +1,7 @@
+CLM Assumptions,Model 1 - Violated?,Model 2 - Violated?,Model 3 - Violated?,Comments
+CLM 1 - A linear model,No,No,No,The linear relationship between X and Y are clearly defined for all the models.
+CLM 2 - Random Sampling,Yes,Yes,Yes,Clustering and Autocorrelation
+CLM 3 – Multicollinearity,No,No,No,No perfect correlation among variables.
+CLM 4 - Zero-Conditional Mean,Yes (partially),Yes,Yes,Strong assumption and usually fails.
+CLM 5 - Homoscedasticity,Yes,Yes,Yes,Do not represent band of distributions from left to right on Residuals vs Fitted plot.
+CLM 6 - Normality of Residuals,No,No,No,Q-Q plots confirm normality of residuals.
